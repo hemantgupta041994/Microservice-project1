@@ -7,6 +7,7 @@ import com.example.student_service.repository.StudentRepository;
 import com.example.student_service.request.CreateStudentRequest;
 import com.example.student_service.response.AddressResponse;
 import com.example.student_service.response.StudentResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 //import org.springframework.web.reactive.function.client.WebClient;
@@ -19,6 +20,9 @@ public class StudentServiceImpl implements StudentService {
 
     @Autowired
     AddressFeignClient addressFeignClient;
+
+    @Autowired
+    CommonService commonService;
 
     /*@Autowired
     WebClient webClient;*/
@@ -38,7 +42,7 @@ public class StudentServiceImpl implements StudentService {
 
         StudentResponse studentResponse = new StudentResponse(student);
 //        studentResponse.setAddressResponse(getAddressById(student.getAddressId()));
-        studentResponse.setAddressResponse(addressFeignClient.getById(student.getAddressId()));
+        studentResponse.setAddressResponse(commonService.getAddressById(student.getAddressId()));
 
         return studentResponse;
     }
@@ -52,13 +56,25 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findById(id).orElseGet(null);
         StudentResponse studentResponse = new StudentResponse(student);
 //        studentResponse.setAddressResponse(getAddressById(student.getAddressId()));
-        studentResponse.setAddressResponse(addressFeignClient.getById(student.getAddressId()));
+        studentResponse.setAddressResponse(commonService.getAddressById(student.getAddressId()));
         return studentResponse;
     }
 
-    /*public AddressResponse getAddressById(long addressId){
-        Mono<AddressResponse> addressResponseMono = webClient.get().uri("/get-by-id/"+addressId)
+    //commented below code moved to commonService, to implement circuit-breaker.
+//    as circuit-breaker internally use spring-aop and AOP will not work if circuit-breaker method and fallback method are in same class.
+//    to avoid this issue following two method's move to commonService
+    /*@CircuitBreaker(name="addressService", fallbackMethod = "fallbackGetAddressById")
+    public AddressResponse getAddressById(long addressId){
+        *//*Mono<AddressResponse> addressResponseMono = webClient.get().uri("/get-by-id/"+addressId)
                 .retrieve().bodyToMono(AddressResponse.class);
-        return addressResponseMono.block();
+        return addressResponseMono.block();*//*
+        //above code is commented as no more using web client now using feignClient
+
+        AddressResponse addressResponse = addressFeignClient.getById(addressId);
+        return addressResponse;
+    }
+
+    public AddressResponse fallbackGetAddressById(long addressId, Throwable throwable){
+        return new AddressResponse();
     }*/
 }
