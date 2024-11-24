@@ -8,6 +8,8 @@ import com.example.student_service.request.CreateStudentRequest;
 import com.example.student_service.response.AddressResponse;
 import com.example.student_service.response.StudentResponse;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 //import org.springframework.web.reactive.function.client.WebClient;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class StudentServiceImpl implements StudentService {
+    Logger logger = LoggerFactory.getLogger(StudentServiceImpl.class);
     @Autowired
     StudentRepository studentRepository;
 
@@ -53,6 +56,7 @@ public class StudentServiceImpl implements StudentService {
      */
     @Override
     public StudentResponse getById(long id) {
+        logger.info("Inside student getById");
         Student student = studentRepository.findById(id).orElseGet(null);
         StudentResponse studentResponse = new StudentResponse(student);
 //        studentResponse.setAddressResponse(getAddressById(student.getAddressId()));
